@@ -21,12 +21,40 @@ var svg = d3
   .attr("width", svgWidth)
   .attr("height", svgHeight);
 
+// Variables for the path tracker objects
+// var parseTime = d3.timeParse("%Y");
+
+//  var x = d3.timeScale()
+//      .range([0, width]);
+
+    // var y = d3.scale.linear()
+      // .range([height, 0]);
+
+    // var color = d3.scale.category10();
+
+    // var xAxis = d3.svg.axis()
+    //   .scale(x)
+    //   .orient("bottom");
+
+    // var yAxis = d3.svg.axis()
+    //   .scale(y)
+    //   .orient("left");
+
+    // var line = d3.svg.line()
+    //   .interpolate("basis")
+    //   .x(function(d) {
+    //     return x(d.date);
+    //   })
+    //   .y(function(d) {
+    //     return y(d.temperature);
+    //   });
+
 // Append a group area, then set its margins
 var chartGroup = svg.append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
 // Load data from an external data.CSV file
-d3.csv("data.csv", function(error, co2Data) {
+var co2Data = d3.csv("data.csv", function(error, co2Data) {
    if (error) throw error;
 
   // Print the CO2 data
@@ -103,7 +131,6 @@ d3.csv("data.csv", function(error, co2Data) {
      .tickSize(-height)
      .tickFormat("")
  )
-
 // add the Y gridlines
   chartGroup.append("g")			
     .attr("class", "grid")
@@ -111,7 +138,6 @@ d3.csv("data.csv", function(error, co2Data) {
      .tickSize(-width)
      .tickFormat("")
  )
-
   // Line generators for each line
   var line1 = d3.line()
     .x(d => xTimeScale(d.year))
@@ -163,7 +189,119 @@ d3.csv("data.csv", function(error, co2Data) {
     .text("Global Population");
   });
 
-  var mouseG = svg.append("g")
+  // Begin vertical line and circle line path tracker
+var color = d3.scaleLinear().domain([1,length])
+  .interpolate(d3.interpolateHcl)
+  .range([d3.rgb("#007AFF"), d3.rgb('#FFF500')]);
+
+color.domain(d3.keys(co2Data[0]).filter(function(key) {
+  returnkey !== "year";
+}));
+// Call each year from our csv file, 1960 - 2017
+co2Data.forEach(function(d) {
+  d.year = parseTime(d.year);
+});
+
+var pathCircles = color.domain().map(function(circleData) {
+  return {
+    circleData: circleData,
+    values:data.map(function(d) {
+      return {
+        year: d.year,
+        co2: +[circleData]    
+      };
+    })
+  };
+});
+
+x.domain(d3.extent(data, function(c) {
+  return d.year;
+}));
+
+y.domain([
+  d3.min(pathCircles, function(c) {
+    return d3.min(c.values, function(v) {
+      return v.co2;
+    });
+  })
+]);
+// Adding a legend to the graph
+var legend = svg.selectAll('g')
+  .data(pathCircles)
+  .enter()
+  .append('g')
+  .attr('class', 'legend');
+
+legend.append('rect')
+  .attr('x', width - 20)
+  .attr('y', function(d, i) {
+    return i * 20;
+  })
+  .attr('width', 10)
+  .attr('height', 10)
+  .style('fill', function(d) {
+    return color(d.circleData);
+  });
+
+  legend.append('text')
+  .attr('x', width - 8)
+  .attr('y', function(d, i) {
+    return (i * 20) + 9;
+  })
+  .text(function(d) {
+    return d.circleData;
+  });
+
+  svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
+
+  svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
+
+  svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis)
+    .append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 6)
+    .attr("dy", ".71em")
+    .style("text-anchor", "end")
+    .text("CO2 Emissions (MT)");
+
+var co2_pop = svg.selectAll(".population")
+  .data(pathCircles)  
+  .enter().append("g")
+  .attr("d", function(d) {
+    return line(d.values);
+  })
+
+co2_pop("path")
+  .attr("class", "line")
+  .attr("d", function(d) {
+    return line(d.values);
+  });
+
+co2_pop("text")
+  .datum(function(d) {
+    return {
+      circleData: d.circleData,
+      value: d.values[d.values.length - 1]
+    };
+  })
+  .attr("transform", function(d) {
+    return "translate(" + x(d.value.year) + "," + y(d.value.co2) + ")";
+  })
+  .attr("x", 3)
+  .attr("dy", ".35em")
+  .text(function(d) {
+    return d.circleData
+  });
+// Add vertical line for path tracker  
+var mouseG = svg.append("g")
       .attr("class", "mouse-over-effects");
 
     mouseG.append("path") // this is the black vertical line to follow mouse
@@ -183,7 +321,7 @@ d3.csv("data.csv", function(error, co2Data) {
     mousePerLine.append("circle")
       .attr("r", 7)
       .style("stroke", function(d) {
-        return color(d.name);
+        return color(d.population);
       })
       .style("fill", "none")
       .style("stroke-width", "1px")
