@@ -36,6 +36,11 @@ d3.csv("data.csv", function(error, co2Data) {
   // Configure a parseTime function which will return a new Date object from a string
   var parseTime = d3.timeParse("%Y");
 
+// Reference line 108 on the HTML file
+  // Create an Object Array for the GLobal Population
+
+  //  Create an object array for the CO2 Emissions
+
   // Format the date and cast the CO2 value to a number
   co2Data.forEach(function(data) {
     data.year = parseTime(data.year);
@@ -56,12 +61,22 @@ d3.csv("data.csv", function(error, co2Data) {
     .domain([0, d3.max(co2Data, d => d.population)])
     .range([height, 0]);
 
-  // Create axis functions
+   // Create axis functions
   var bottomAxis = d3.axisBottom(xTimeScale)
     .tickFormat(d3.timeFormat("%Y"));
   var leftAxis = d3.axisLeft(yLinearScale1);
   var rightAxis = d3.axisRight(yLinearScale2);
 
+    // gridlines in x axis function // 
+  function make_x_gridlines() {		
+    return d3.axisBottom(xTimeScale)
+        .ticks(10)
+}
+// gridlines in y axis function //
+  function make_y_gridlines() {		
+    return d3.axisLeft(yLinearScale1)
+        .ticks(10)
+}
   // Add x-axis
   chartGroup.append("g")
     .attr("transform", `translate(0, ${height})`)
@@ -79,6 +94,23 @@ d3.csv("data.csv", function(error, co2Data) {
     .classed("blue", true)
     .attr("transform", `translate(${width}, 0)`)
     .call(rightAxis);
+
+ // add the X gridlines
+  chartGroup.append("g")			
+    .attr("class", "grid")
+    .attr("transform", "translate(0," + height + ")")
+    .call(make_x_gridlines()
+     .tickSize(-height)
+     .tickFormat("")
+ )
+
+// add the Y gridlines
+  chartGroup.append("g")			
+    .attr("class", "grid")
+    .call(make_y_gridlines()
+     .tickSize(-width)
+     .tickFormat("")
+ )
 
   // Line generators for each line
   var line1 = d3.line()
@@ -105,12 +137,30 @@ d3.csv("data.csv", function(error, co2Data) {
   chartGroup.append("text")
   .attr("transform", `translate(${width / 2}, ${height + margin.top + 20})`)
     .classed("population-text text", true)
-    .text("Global Population");
+    .text("Global Population and");
 
   chartGroup.append("text")
   .attr("transform", `translate(${width / 2}, ${height + margin.top + 37})`)
     .classed("co2-text text", true)
-    .text("and CO2 Emissions");
+    .text("CO2 Emissions from 1960 to 2017");
+
+  // append y1 (Left) axis
+  chartGroup.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left)
+    .attr("x", 0 - (height / 1.5))
+    .attr("dy", "1em")
+    .classed("axis-text", true)
+    .text("CO2 Emissions in Metric Tonnes");
+  
+  // append y2 (Right) axis
+  chartGroup.append("text")
+    .attr("transform", "rotate(-90,355,-410)")
+    .attr("y", 0 + margin.right)
+    .attr("x", 0 - (height / 1.5))
+    .attr("dy", "1em")
+    .classed("axis-text", true)
+    .text("Global Population");
   });
 
   var mouseG = svg.append("g")
@@ -200,46 +250,5 @@ d3.csv("data.csv", function(error, co2Data) {
             return "translate(" + mouse[0] + "," + pos.y +")";
           });
       });
-// Add line chart circle tooltip    
-//     var focus = chartGroup.append("g")
-//     .attr("class", "focus")
-//     .style("display", "none");
 
-// focus.append("line")
-//     .attr("class", "x-hover-line hover-line")
-//     .attr("y1", 0)
-//     .attr("y2", height);
-
-// focus.append("line")
-//     .attr("class", "y-hover-line hover-line")
-//     .attr("x1", width)
-//     .attr("x2", width);
-
-// focus.append("circle")
-//     .attr("r", 7.5);
-
-// focus.append("text")
-//     .attr("x", 15)
-//     .attr("dy", ".31em");
-
-// svg.append("rect")
-//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-//     .attr("class", "overlay")
-//     .attr("width", width)
-//     .attr("height", height)
-//     .on("mouseover", function() { focus.style("display", null); })
-//     .on("mouseout", function() { focus.style("display", "none"); })
-//     .on("mousemove", mousemove);
-
-// function mousemove() {
-//   var x0 = xTimeScale.invert(d3.mouse(this)[0]),
-//       i = bisectDate(data, x0, 1),
-//       d0 = data[i - 1],
-//       d1 = data[i],
-//       d = x0 - d0.year > d1.year - x0 ? d1 : d0;
-//   focus.attr("transform", "translate(" + x(d.year) + "," + y(d.value) + ")");
-//   focus.select("text").text(function() { return d.value; });
-//   focus.select(".x-hover-line").attr("y2", height - y(d.value));
-//   focus.select(".y-hover-line").attr("x2", width + width);
-// }
-// });
+// End multi-line graph code, circles on path not functioning....yet!  
